@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using OlimpikonokAPI.Models;
 
 namespace OlimpikonokAPI.Controllers
@@ -9,13 +10,13 @@ namespace OlimpikonokAPI.Controllers
     public class OrszagController : ControllerBase
     {
         [HttpGet]
-        public IActionResult GetAll()
+        public async Task<IActionResult> GetAll()
         {
             try
             {
                 using (var context = new OlimpikonokContext())
                 {
-                    List<Orszag> orszagok = context.Orszags.ToList();
+                    List<Orszag> orszagok = await context.Orszags.ToListAsync();
                     return Ok(orszagok);
                 }
 
@@ -62,6 +63,51 @@ namespace OlimpikonokAPI.Controllers
                         Nev = $"Hiba a betöltés közben: {ex.Message}",
                     };
                     return BadRequest(hiba);
+                }
+            }
+        }
+
+        [HttpPut("ModositOrszag")]
+        public async Task<IActionResult> PutOrszag(Orszag orszag)
+        {
+            try
+            {
+                using (var context = new OlimpikonokContext())
+                {
+              
+                    if (!context.Orszags.Select(o => o.Id).Contains(orszag.Id))
+                    {
+                        context.Orszags.Update(orszag);
+                        await context.SaveChangesAsync();
+                        return Ok("Sikeres módosítás");
+                    }
+                    else
+                    {
+                        return BadRequest("Hiba nincs ilyen!");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex);
+            }
+        }
+
+        [HttpPost("UjOrszag")]
+        public async Task<IActionResult> PostOrszag(Orszag orszag)
+        {
+            using(var context  = new OlimpikonokContext())
+            {
+                try
+                {
+                    List<Orszag> orszagok = context.Orszags.ToList();
+                    orszagok.Add(orszag);
+                    await context.SaveChangesAsync();
+                    return Ok("Sikeres hozzáadás!");
+
+                } catch (Exception ex)
+                {
+                    return BadRequest(ex);
                 }
             }
         }
